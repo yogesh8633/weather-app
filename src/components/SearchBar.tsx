@@ -19,7 +19,7 @@ interface Locality {
 interface SearchBarProps {
   localities: Locality[];
   onLocalitySelected: (cityName: string, localityName: string) => void;
-  onClearWeather: () => void; // Add this prop to clear weather details
+  onClearWeather: () => void;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
@@ -29,7 +29,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
 }) => {
   const [value, setValue] = useState("");
   const [suggestions, setSuggestions] = useState<Locality[]>([]);
-  const dispatch = useAppDispatch(); // Initialize dispatch
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null); // Add error message state
+  const dispatch = useAppDispatch();
 
   const getSuggestions = (value: string) => {
     const inputValue = value.trim().toLowerCase();
@@ -47,11 +49,13 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const debouncedFetchSuggestions = useCallback(
     debounce((value: string) => {
       setSuggestions(getSuggestions(value));
-    }, 1000), // 2-second debounce
+      setLoading(false); // Set loading to false when suggestions are fetched
+    }, 1000),
     [localities]
   );
 
   const onSuggestionsFetchRequested = ({ value }: any) => {
+    setLoading(true); // Set loading to true when fetching starts
     debouncedFetchSuggestions(value);
   };
 
@@ -69,30 +73,31 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
   const onChange = (event: any, { newValue }: any) => {
     setValue(newValue);
+    setErrorMessage(null); // Clear any previous error messages
   };
 
   const onSuggestionSelected = (event: any, { suggestion }: any) => {
     const localityId = suggestion.localityId;
-    dispatch(getWeatherByLocalityId(localityId)); // Fetch the weather data for the selected locality
-
-    // Pass the city and locality names to the parent component
+    dispatch(getWeatherByLocalityId(localityId));
     onLocalitySelected(suggestion.cityName, suggestion.localityName);
   };
 
   const handleSearch = () => {
     if (suggestions.length > 0) {
       const firstSuggestion = suggestions[0];
-      dispatch(getWeatherByLocalityId(firstSuggestion.localityId)); // Trigger search for the first suggestion
-
-      // Pass the city and locality names to the parent component
+      dispatch(getWeatherByLocalityId(firstSuggestion.localityId));
       onLocalitySelected(firstSuggestion.cityName, firstSuggestion.localityName);
+    } else {
+      setErrorMessage("Weather for this locality is not available.");
+      onClearWeather(); // Clear any existing weather details
     }
   };
 
   const clearInput = () => {
     setValue("");
     setSuggestions([]);
-    onClearWeather(); // Clear the weather details
+    setErrorMessage(null); // Clear any previous error messages
+    onClearWeather();
   };
 
   const inputProps = {
@@ -124,21 +129,28 @@ const SearchBar: React.FC<SearchBarProps> = ({
           theme={{
             container: "relative w-full",
             suggestionsContainer:
-              "absolute mt-1 w-full bg-white rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto", // Scrollable container with max height
+              "absolute mt-1 w-full bg-white rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto",
             suggestionsList: "list-none p-0 m-0",
             suggestion: "py-2 px-4 hover:bg-gray-200 cursor-pointer",
             suggestionHighlighted: "bg-gray-200",
           }}
         />
         {value && (
-          <Image
-            src="/close.png"
-            className="absolute right-6 top-4 w-3 cursor-pointer"
-            alt="Clear icon"
-            width={20}
-            height={20}
-            onClick={clearInput}
-          />
+          loading ? (
+            <div
+              className="absolute right-4 top-4 w-4 h-4 rounded-full animate-spin
+              border-y-2 border-solid border-blue-500 border-t-transparent"
+            ></div>
+          ) : (
+            <Image
+              src="/close.png"
+              className="absolute right-6 top-4 w-3 cursor-pointer"
+              alt="Clear icon"
+              width={20}
+              height={20}
+              onClick={clearInput}
+            />
+          )
         )}
         <Image
           src="/vs.png"
@@ -163,6 +175,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
           I&apos;m Feeling Lucky
         </button>
       </div>
+      {errorMessage && (
+        <div className="text-red-500 text-sm mt-4 text-center">{errorMessage}</div>
+      )}
     </>
   );
 };
