@@ -72,7 +72,11 @@ export default function Home() {
         </div>
 
         {/* Conditionally render WeatherDetails based on weatherData */}
-        {weatherStatus === "loading" && <p>Loading...</p>}
+        {weatherStatus === "loading" && (
+          <div
+            className="w-12 h-12  mt-8 rounded-full animate-spin
+           border-y-2 border-solid border-blue-500 border-t-transparent"></div>
+        )}
         {weatherStatus === "succeeded" && weatherData && (
           <WeatherDetails
             city={selectedCity}
