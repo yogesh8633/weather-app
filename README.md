@@ -9,6 +9,14 @@ This project is a simple weather application built using Next.js, Tailwind CSS, 
 - **Responsive Design**: The app is fully responsive and works on all device sizes.
 - **Material Design Icons**: The app uses Material Design Icons for a clean and modern look.
 
+## Debouncing in Search Input
+
+    To improve performance and reduce the number of unnecessary operations when users type in the search bar, this project implements **debouncing**. Debouncing ensures that the function to fetch suggestions is not called too frequently, but rather only after the user has stopped typing for a certain period (in this case, 1 second).
+
+### Debouncing Implementation
+
+    The debounce functionality is implemented using the `debounce` function from the `lodash` library.
+
 ## Technologies Used
 
 - **Next.js**: A React framework for production.
