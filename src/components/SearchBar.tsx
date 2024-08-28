@@ -1,10 +1,11 @@
 "use client"; // Ensure this is at the very top
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import Autosuggest from "react-autosuggest";
 import { useAppDispatch } from "../hooks/useAppDispatch";
 import Image from "next/image";
 import { getWeatherByLocalityId } from "@/features/weather/WeatherSlice";
+import debounce from "lodash/debounce";
 
 interface Locality {
   cityName: string;
@@ -14,12 +15,18 @@ interface Locality {
   longitude: number;
   device_type: string;
 }
+
 interface SearchBarProps {
   localities: Locality[];
-  onLocalitySelected: (cityName: string, localityName: string) => void; // Add this prop
+  onLocalitySelected: (cityName: string, localityName: string) => void;
+  onClearWeather: () => void; // Add this prop to clear weather details
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ localities, onLocalitySelected }) => {
+const SearchBar: React.FC<SearchBarProps> = ({
+  localities,
+  onLocalitySelected,
+  onClearWeather,
+}) => {
   const [value, setValue] = useState("");
   const [suggestions, setSuggestions] = useState<Locality[]>([]);
   const dispatch = useAppDispatch(); // Initialize dispatch
@@ -37,8 +44,15 @@ const SearchBar: React.FC<SearchBarProps> = ({ localities, onLocalitySelected })
           .slice(0, 10); // Limit to 10 suggestions
   };
 
+  const debouncedFetchSuggestions = useCallback(
+    debounce((value: string) => {
+      setSuggestions(getSuggestions(value));
+    }, 1000), // 2-second debounce
+    [localities]
+  );
+
   const onSuggestionsFetchRequested = ({ value }: any) => {
-    setSuggestions(getSuggestions(value));
+    debouncedFetchSuggestions(value);
   };
 
   const onSuggestionsClearRequested = () => {
@@ -78,7 +92,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ localities, onLocalitySelected })
   const clearInput = () => {
     setValue("");
     setSuggestions([]);
-    
+    onClearWeather(); // Clear the weather details
   };
 
   const inputProps = {
@@ -118,7 +132,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ localities, onLocalitySelected })
         />
         {value && (
           <Image
-            src="/close.png" // Replace with your actual clear icon path
+            src="/close.png"
             className="absolute right-6 top-4 w-3 cursor-pointer"
             alt="Clear icon"
             width={20}

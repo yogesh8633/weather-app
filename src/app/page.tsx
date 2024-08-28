@@ -19,6 +19,10 @@ export default function Home() {
     setSelectedCity(cityName);
     setSelectedLocality(localityName);
   };
+  const handleClearWeather = () => {
+    setSelectedCity(null);
+    setSelectedLocality(null);
+  };
 
   useEffect(() => {
     const fetchLocalities = async () => {
@@ -68,6 +72,7 @@ export default function Home() {
           <LocalitySearch
             localities={localities}
             onLocalitySelected={handleLocalitySelected}
+            onClearWeather={handleClearWeather}
           />
         </div>
 
@@ -77,7 +82,7 @@ export default function Home() {
             className="w-12 h-12  mt-8 rounded-full animate-spin
            border-y-2 border-solid border-blue-500 border-t-transparent"></div>
         )}
-        {weatherStatus === "succeeded" && weatherData && (
+        {weatherStatus === "succeeded" && weatherData && selectedCity && selectedLocality && (
           <WeatherDetails
             city={selectedCity}
             locality={selectedLocality}
